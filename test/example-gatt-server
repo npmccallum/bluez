@@ -82,11 +82,12 @@ class Service(dbus.service.Object):
     """
     PATH_BASE = '/org/bluez/example/service'
 
-    def __init__(self, bus, index, uuid, primary):
+    def __init__(self, bus, index, uuid, primary, includes=[]):
         self.path = self.PATH_BASE + str(index)
         self.bus = bus
         self.uuid = uuid
         self.primary = primary
+        self.includes = includes
         self.characteristics = []
         dbus.service.Object.__init__(self, bus, self.path)
 
@@ -95,9 +96,7 @@ class Service(dbus.service.Object):
                 GATT_SERVICE_IFACE: {
                         'UUID': self.uuid,
                         'Primary': self.primary,
-                        'Characteristics': dbus.Array(
-                                self.get_characteristic_paths(),
-                                signature='o')
+                        'Includes': dbus.Array(self.includes, signature='o')
                 }
         }
 
@@ -106,12 +105,6 @@ class Service(dbus.service.Object):
 
     def add_characteristic(self, characteristic):
         self.characteristics.append(characteristic)
-
-    def get_characteristic_paths(self):
-        result = []
-        for chrc in self.characteristics:
-            result.append(chrc.get_path())
-        return result
 
     def get_characteristics(self):
         return self.characteristics
@@ -145,9 +138,6 @@ class Characteristic(dbus.service.Object):
                         'Service': self.service.get_path(),
                         'UUID': self.uuid,
                         'Flags': self.flags,
-                        'Descriptors': dbus.Array(
-                                self.get_descriptor_paths(),
-                                signature='o')
                 }
         }
 
@@ -156,12 +146,6 @@ class Characteristic(dbus.service.Object):
 
     def add_descriptor(self, descriptor):
         self.descriptors.append(descriptor)
-
-    def get_descriptor_paths(self):
-        result = []
-        for desc in self.descriptors:
-            result.append(desc.get_path())
-        return result
 
     def get_descriptors(self):
         return self.descriptors
